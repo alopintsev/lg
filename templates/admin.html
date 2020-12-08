@@ -1,0 +1,144 @@
+{# _myapp/templates/index.html_ #}
+
+{% extends "layout.html" %}
+{% block title %}Looking glass{% endblock %}
+{% block body %}
+    {{ super() }}
+
+<div id="appAdmin">
+
+<div id="notifications" class="columns">
+<div class="column is-8">
+</div>
+</div>
+
+<div class="columns">
+    <div class="column is-4"> <!-- begin devices column -->
+      {% if appSettings.isAdminPasswordExist %}
+        <label class="label">Password for admin interface:</label>            
+      {%else%}
+        <label class="label has-text-danger">Password for admin interface:</label>            
+      {%endif%}
+
+    </div>
+    <div class="column is-4"> <!-- begin devices column -->        
+       <div class="control">      
+          {% if appSettings.isAdminPasswordExist %}
+          <input v-model="admin_password" class="input" placeholder="*************"></input>
+        {%else%}
+          <input v-model="admin_password" class="input" placeholder="..."></input>
+        {%endif%}
+         
+      </div>
+    </div>
+</div>
+
+<div class="columns">
+    <div class="column is-4"> <!-- begin devices column -->  
+      <label class="label">Device sign in login:</label>            
+    </div>
+    <div class="column is-4"> <!-- begin devices column -->        
+       <div class="control">      
+         <input v-model="login" class="input"></input>
+      </div>
+    </div>
+</div>
+
+<div class="columns">
+    <div class="column is-4"> <!-- begin devices column -->  
+      <label class="label">Device sign in password:</label>            
+    </div>
+    <div class="column is-4"> <!-- begin devices column -->        
+       <div class="control">      
+          {% if appSettings.isPasswordExist %}
+            <input v-model="password" class="input" placeholder="*************"></input>          
+          {%else%}
+            <input v-model="password" class="input" placeholder="..."></input>          
+          {%endif%}         
+       </div>
+    </div>
+</div>
+
+<div class="columns">
+  <div class="column is-4"> <!-- begin devices column -->  
+   <label class="label">Devices:</label>
+   <div class="field">
+    <div class="control">      
+      <textarea v-model="hosts" class="textarea" rows="25" placeholder="Enter devices line by line"></textarea>
+   </div>
+   </div>
+
+  </div> <!-- EOF column with devices -->
+
+  <div class="column is-4"> <!-- begin commands column -->   
+    <label class="label">Commands:</label>   
+    <div class="field">
+    <div class="control">
+	      <textarea v-model="commands" class="textarea" rows="25" placeholder="Enter commands line by line"></textarea>
+    </div>
+   </div>
+
+  </div> <!-- EOF column with commands -->
+
+</div>
+
+<div class="columns">
+<div class="column is-offset-4 is-4">    
+    <button class="button is-link is-fullwidth" @click="sendRequest">Save changes</button>
+</div>
+</div>
+
+<div v-if="seenProgress" class="columns">
+<div class="column is-8">
+<progress class="progress is-small is-primary" max="100"></progress>
+</div>
+</div>
+
+
+</div>
+<script>
+
+
+new Vue({
+  el: '#appAdmin',
+  data: {
+    hosts:"{% for host in appSettings.hosts %}{{host|safe}}\n{% endfor %}",
+    commands: "{% for cmd in appSettings.commands %}{{cmd|safe}}\n{% endfor %}",
+    login: "{{appSettings.login}}",
+    password: null,
+    admin_password: null,
+    seenProgress: null
+  },
+  delimiters: ['[[',']]'],
+  methods: {
+        onChange(event) {
+            console.log(event.target.value)
+        },
+	sendRequest(event) {
+    var hostsList = this.hosts.split('\n');
+    var commandsList = this.commands.split('\n');
+	axios({
+	  method: 'post',
+	  url: '{{config['CMD_SAVE_CFG_URL']|safe}}',
+	  data: JSON.stringify({
+	    hosts: hostsList,
+	    commands: commandsList,
+      login: this.login,
+      password: this.password,
+      admin_password: this.admin_password
+	  })
+	}).then((response) => {
+      location.reload();      
+			}, 
+		(error) => {			
+  			console.log(error);
+		})
+        }
+    }
+})
+
+</script>
+
+
+{% endblock %}
+

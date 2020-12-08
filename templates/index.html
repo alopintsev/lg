@@ -1,0 +1,166 @@
+{# _myapp/templates/index.html_ #}
+
+{% extends "layout.html" %}
+{% block title %}Looking glass{% endblock %}
+{% block body %}
+    {{ super() }}
+
+<div id="app">
+
+<div id="notifications" class="columns">
+<div class="column is-8">
+</div>
+</div>
+
+<div class="columns">
+
+  <div class="column is-4"> <!-- begin devices column -->
+   <div class="field">
+       <label class="label">Devices:</label>
+   </div>
+
+    <div class="field">
+    <div class="control">
+      <input v-model="hostsFilter" class="input is-primary" type="text" placeholder="Type to filter hosts ...">
+    </div>
+    </div>
+
+   <div class="field">
+    <div class="control">
+  <span class="select is-multiple is-fullwidth">
+    <select multiple="true" size="4" v-model="selectedHosts">
+      <option v-for="option in filteredHosts" v-bind:value="option">
+         [[ option ]]
+      </option>
+    </select>
+  <label class="label">Selected devices:</label>
+    [[selectedHosts]]
+  </span>
+   </div>
+   </div>
+
+  </div> <!-- EOF column with devices -->
+
+  <div class="column is-4"> <!-- begin commands column -->
+   <div class="field">
+      <label class="label">Commands:</label>
+   </div>
+   <div class="field">
+    <div class="control">
+      <input v-model="commandsFilter" class="input is-primary" type="text" placeholder="Type to filter commands ...">
+    </div>
+   </div>
+   <div class="field">
+    <div class="control">
+	<span class="select is-multiple is-fullwidth">
+	<select class="is-4" multiple="true" size="4" v-model="selectedCommands">
+	  <option v-for="option in filteredCommands" v-bind:value="option">
+	    [[ option ]]
+	  </option>
+	</select>
+	  <label class="label">Selected commands:</label>
+	[[selectedCommands]]
+	</span>
+    </div>
+   </div>
+
+  </div> <!-- EOF column with commands -->
+
+</div>
+
+<div class="columns">
+<div class="column is-offset-4 is-4">
+    <input id="checkboxAccumulateResponse" type="checkbox" v-model="cbAccumulateResponse">
+    <label for="checkboxAccumulateResponse">accumulate response</label>
+
+    <button class="button is-link is-fullwidth" @click="sendRequest">Go</button>
+</div>
+</div>
+
+
+<div v-if="seenProgress" class="columns">
+<div class="column is-8">
+<progress class="progress is-small is-primary" max="100"></progress>
+</div>
+</div>
+
+<div v-if="response.length" class="columns">
+<div class="column is-12">
+<pre>
+[[response]]
+</pre>
+</div>
+</div>
+
+</div>
+<script>
+
+
+new Vue({
+  el: '#app',
+  data: {
+    selectedHosts: '-',
+    hostsFilter: '',
+    commandsFilter: '',
+    selectedCommands: '-',
+    seenProgress: false,
+    cbAccumulateResponse: true,
+    response: '',
+    optionsHosts: {{appSettings['hosts']|safe}},
+    optionsCommands: {{appSettings['commands']|safe}}
+  },
+  computed: {
+   filteredHosts() {
+      return this.optionsHosts.filter(item => {
+         return item.toLowerCase().search(this.hostsFilter.toLowerCase()) > -1
+      })
+    },
+  filteredCommands() {
+      return this.optionsCommands.filter(item => {
+         return item.toLowerCase().search(this.commandsFilter.toLowerCase()) > -1
+      })
+    },
+  },
+  delimiters: ['[[',']]'],
+  methods: {
+        onChange(event) {
+            console.log(event.target.value)
+        },
+	sendRequest(event) {
+            console.log(this.selectedHosts)
+            console.log(this.selectedCommands)
+	    this.seenProgress = true
+	axios({
+	  method: 'post',
+	  url: '{{config['CMD_EXECUTE_URL']|safe}}',
+	  data: JSON.stringify({
+	    hosts: this.selectedHosts,
+	    commands: this.selectedCommands
+	  })
+	}).then((response) => {
+                             var curTime = new Date().toLocaleString();
+			     this.seenProgress = false;
+
+			    if(this.cbAccumulateResponse) {
+                               var oldResponse = this.response;
+			       this.response = curTime + "\n";
+			       this.response += response.data;
+			       this.response += "\n" + oldResponse;
+			    }
+                            else
+			       this.response = curTime + "\n" + response.data;
+			
+			}, 
+		(error) => {
+			this.seenProgress = false;
+  			console.log(error);
+		})
+        }
+    }
+})
+
+</script>
+
+
+{% endblock %}
+

@@ -1,0 +1,61 @@
+{# _myapp/templates/index.html_ #}
+
+{% extends "layout.html" %}
+{% block title %}Looking glass{% endblock %}
+{% block body %}
+{{ super() }}
+
+<div id="appLogin">
+  <div v-if="alert" class="notification is-danger is-light">
+    [[alert]]
+  </div>      
+
+  <div class="columns">
+    <div class="column is-4 is-offset-4">
+      <div class="field">
+        <label class="label">Please enter admin password:</label>
+        <div class="control">
+          <input id="adminKey" v-model="adminKey" class="input" type="password" placeholder="*****">    
+        </div>
+      </div>
+      <div class="field">
+        <div class="control has-text-right">
+          <button class="button is-success" @click="sendRequest">Login</button>
+        </div>
+    </div>     
+    </div>
+  </div>
+</div>
+
+<script>
+new Vue({
+    el: '#appLogin',
+    data: {
+      adminKey: '',
+      alert: null
+    },
+    delimiters: ['[[',']]'],
+    methods: {          
+      sendRequest(event) {                
+        axios({
+          method: 'post',
+          url: '{{config['CMD_AUTHORIZE_URL']|safe}}',
+          data: JSON.stringify({
+            key: this.adminKey
+          })
+        }).then((response) => {
+            console.log('authorized successfull');
+            window.location.href = '{{fromUrl}}'; 
+            }, 
+            (error) => {            
+                this.alert = "Password incorrect";
+                //autohide alert
+                setTimeout(() => { this.alert = null}, 2000)
+                console.log(error);
+            }
+          )
+      }
+    }
+})
+  </script>
+{% endblock %}

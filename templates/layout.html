@@ -1,0 +1,69 @@
+{# _myapp/templates/layout.html_ #}
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>{% block title %}{% endblock %}</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/png" sizes="16x16" href="/static/favicon.ico">
+    </head>
+
+<script src="/static/vue.min.js"></script>
+<link rel="stylesheet" href="/static/bulma.min.css"/>
+<script src="/static/axios.min.js"></script>
+
+<body>
+
+<nav class="navbar is-light" role="navigation" aria-label="main navigation">
+  {% if showAdminLinkMenu %}
+  <div class="navbar-end">
+    <a class="navbar-item has-text-info" href="/admin">Admin</a>
+  </div>  
+  {% endif %}    
+  {% if session['isAuthorized'] %}
+  <div v-if="logged_in" id="logout" class="navbar-end">        
+    <a class="navbar-item has-text-danger" @click="sendRequest">Logout</a>   
+  </div>      
+  {% endif %}
+</nav>
+
+  {% if session['isAuthorized'] %}
+  <script>      
+        new Vue({
+    el: '#logout',
+    data: {
+        logged_in: true
+    },
+    delimiters: ['[[',']]'],
+    methods: {          
+      sendRequest(event) {              
+    axios({
+      method: 'post',
+      url: '{{config['CMD_LOGOUT_URL']|safe}}'
+    }).then((response) => {
+        console.log('logout successfull');        
+        this.logged_in = false
+        window.location.href = '/'; 
+        }, 
+      (error) => {
+       // this.seenProgress = false;
+          console.log(error);
+      })
+          }
+      }
+  })
+  </script>
+{% endif %}
+
+
+      <section class = "section">
+
+         <div class = "container">
+    {% block body %}
+    {% endblock %}
+	</div>
+</section>
+    </body>
+</html>
+

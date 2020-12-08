@@ -1,0 +1,11 @@
+version: '3'
+services:
+    lg:
+        build: .
+        container_name: lg
+        network_mode: "host"
+        #command: ["app.py"]
+        #command: ["/bin/sh"]
+        ports:
+            - 8000:8000
+        restart: unless-stopped               
